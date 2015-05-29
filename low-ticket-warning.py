@@ -1,12 +1,40 @@
-tweets = ["@blackcatdc LOW TICKET ALERT: Big Data (3/27) and Twin Shadow (3/30). Get your tix ASAP!", "@blackcatdc LOW TICKET ALERT for @PerfumeGenius w/ @JennyHval TOMORROW!", "@blackcatdc Correction: TONIGHT: Perfect Pussy (10:15), Skating Polly (9:15), Baby Bry Bry & The Apologists (8:15). Doors 7:30PM. SOLD OUT"] #Eventually, we'll use Tweepy to check @blackcatdc, @930club, @dc9nightclub, @uhalldc, @rocknrollhotel (and any other venues we want) and store the tweets as a list like this one
-#It might actually have to be a dictionary (so we can keep track of who sent the tweet, not just the contents of it), but for now let's assume it's a list because that's easier!
+#Import tweepy and tweepy credentials
+import tweepy
+from low_ticket_cred import consumer_key, consumer_secret, access_token, access_token_secret, twilio_account_sid, twilio_auth_token
 
-#Loop through each tweet in the list "tweets" and check for the phrase "lower ticket warning"
-for tweet in tweets:
-	if “low ticket warning” in tweet.lower() or "low ticket alert" in tweet.lower(): #make sure to make the tweet contents all lowercase because some venues tweet in all upper case, some use sentence case, etc. By making them all lowercase we can make sure capital letters don't throw off the matching/conditional
-		print tweet #Eventually we will use some program (Rapid SMS, maybe) to text us the tweet username contents.
-	else:
-		print "No warnings - your tickets are safe for another day!"
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token, access_token_secret)
+
+api = tweepy.API(auth)
+
+from twilio.rest import TwilioRestClient
+
+client = TwilioRestClient(twilio_account_sid, twilio_auth_token)
+
+
+import time
+import datetime
+'''
+public_tweets = api.home_timeline(count = 10) #figure out how to return more than 20 results
+for tweet in public_tweets:
+    #if "bicycle" in tweet.text.lower():
+	print "{0} said: \"{1}\"".format(tweet.user.screen_name, tweet.text)
+'''
+#You could also build this list using raw_input
+
+venue_handles = ["blackcatdc", "uhalldc", "930club", "dc9nightclub", "rocknrollhotel"]
+
+
+for handle in venue_handles:
+	time.sleep(1) 
+	venue_tweets = api.user_timeline(handle)
+	for tweet in venue_tweets:
+		if "low ticket warning" in tweet.text.lower() or "low ticket alert" in tweet.text.lower():
+			message = client.messages.create(body="{0} just tweeted: {1}".format(tweet.user.screen_name, tweet.text),
+			to="+18475420232",
+			from_="+12242315634")
+		else:
+			print "No warnings from {0} at {1}".format(tweet.user.screen_name, datetime.datetime.now())
 	
 #Stuff I'd like to add/figure out:
 ## Can we create a list of bands we care about and it'll only alert us about those shows?
